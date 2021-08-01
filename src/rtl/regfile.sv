@@ -23,6 +23,8 @@ always_ff @ (posedge clk) begin
     r1_data <= 32'h00000000;
   end else if (r1_addr == 5'b00000) begin
     r1_data <= 32'h00000000;
+  end else if (w_enable && r1_addr == w_addr) begin
+    r1_data <= w_data;
   end else begin
     r1_data <= regs[r1_addr];
   end
@@ -33,6 +35,8 @@ always_ff @ (posedge clk) begin
     r2_data <= 32'h00000000;
   end else if (r2_addr == 5'b00000) begin
     r2_data <= 32'h00000000;
+  end else if (w_enable && r2_addr == w_addr) begin
+    r2_data <= w_data;
   end else begin
     r2_data <= regs[r2_addr];
   end
@@ -74,6 +78,8 @@ always_ff @ (posedge clk) begin
     regs[31] <= 32'h00000000;
   end else if (w_enable && w_addr != 5'b00000) begin
     regs[w_addr] <= w_data;
+  end else begin
+    regs[w_addr] <= regs[w_addr];
   end
 end
 

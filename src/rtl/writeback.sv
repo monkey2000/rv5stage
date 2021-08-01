@@ -7,7 +7,7 @@ module writeback(
   input logic clk,
   input logic rst,
   input DecodeInfo info,
-  input logic [31:0] alu_in,
+  input logic [31:0] mem_in,
 
   output logic w_enable,
   output logic [4:0] w_addr,
@@ -15,9 +15,9 @@ module writeback(
 );
 
 always_comb begin
-  w_enable = info.reg_write;
+  w_enable = info.enable && info.reg_write;
   w_addr = info.rd;
-  w_data = alu_in;
+  w_data = mem_in;
 end
 
 endmodule

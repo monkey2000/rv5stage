@@ -1,7 +1,14 @@
+#include <iostream>
 #include "Vtop.h"
 #include "verilated.h"
+#include "Vtop___024root.h"
 #include <verilated_vcd_c.h>
 uint64_t global_ticks = 0;
+
+uint32_t inspect_value(Vtop *top, int pos) {
+    assert(pos >= 0 && pos < 32);
+    return top->rootp->top__DOT__regfile__DOT__regs[pos];
+}
 
 int main(int argc, char **argv, char **env) {
     Verilated::commandArgs(argc, argv);
@@ -30,6 +37,12 @@ int main(int argc, char **argv, char **env) {
 
         top->eval();
         tfp->dump(global_ticks);
+    }
+
+    std::cout << "Simulation Finished" << std::endl;
+
+    for (int i = 0; i < 32; i++) {
+        std::cout << "Reg[" << std::dec << i << "] = " << std::hex << inspect_value(top, i) << std::endl;
     }
 
     tfp->close();

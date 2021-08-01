@@ -9,15 +9,24 @@ module execute(
   input DecodeInfo info,
   input logic [31:0] rs1_data,
   input logic [31:0] rs2_data,
+  input DecodeInfo mem_info,
+  input logic [31:0] mem_out,
   output logic [31:0] alu_out,
-  output logic [31:0] alu_out_ff,
   output DecodeInfo info_ff
 );
 
+logic [31:0] alu_out_ff;
+
 logic [31:0] opr1, opr2;
 
-assign opr1 = rs1_data;
-assign opr2 = info.alu_src ? info.imm : rs2_data;
+logic forward_opr1_from_exe = info.enable && info_ff.enable && info_ff.rd_valid && info.rs1 == info_ff.rd;
+logic forward_opr2_from_exe = info.enable && info_ff.enable && info_ff.rd_valid && info.rs2 == info_ff.rd;
+
+logic forward_opr1_from_mem = info.enable && mem_info.enable && mem_info.rd_valid && info.rs1 == mem_info.rd;
+logic forward_opr2_from_mem = info.enable && mem_info.enable && mem_info.rd_valid && info.rs2 == mem_info.rd;
+
+assign opr1 = forward_opr1_from_exe ? alu_out : forward_opr1_from_mem ? mem_out : rs1_data;
+assign opr2 = info.alu_src ? info.imm : forward_opr2_from_exe ? alu_out : forward_opr2_from_mem ? mem_out : rs2_data;
 
 logic [31:0] out;
 
@@ -48,7 +57,7 @@ always_ff @ (posedge clk) begin
   if (rst) begin
     alu_out <= 32'h00000000;
   end else begin
-    alu_out <= out;
+    alu_out <= info.enable ? out : 32'h00000000;
   end
 end
 
