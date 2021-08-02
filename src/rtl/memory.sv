@@ -7,12 +7,16 @@
 module memory(
   input logic clk,
   input logic rst,
+  output PipeRequest req,
   input DecodeInfo info,
   input logic [31:0] addr,
   input logic [31:0] data,
   output logic [31:0] mem_out,
   output DecodeInfo info_ff
 );
+
+assign req.stall_req = 1'b0;
+assign req.flush_req = 4'b0000;
 
 logic r_enable, w_enable;
 logic [31:0] r_addr, r_data, w_addr, w_data;
@@ -75,6 +79,10 @@ end
 always_ff @ (posedge clk) begin
   if (rst) begin
     mem_out <= 32'h00000000;
+  // end else if (pipe.stall) begin
+  //   mem_out <= mem_out;
+  // end else if (pipe.flush) begin
+  //   mem_out <= 32'h00000000;
   end else begin
     mem_out <= info.mem_read ? read_extended : addr;
   end
@@ -83,6 +91,10 @@ end
 always_ff @ (posedge clk) begin
   if (rst) begin
     info_ff <= 0;
+  // end else if (pipe.stall) begin
+  //   info_ff <= info_ff;
+  // end else if (pipe.flush) begin
+  //   info_ff <= 0;
   end else begin
     info_ff <= info;
   end

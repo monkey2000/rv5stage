@@ -1,9 +1,12 @@
 `ifndef RV5STAGE_ICACHE
 `define RV5STAGE_ICACHE
 
+`include "src/rtl/common.sv"
+
 module icache(
   input logic clk,
   input logic rst,
+  input PipeControl pipe,
   input logic [31:0] addr,
   output logic [31:0] inst,
   output logic error
@@ -26,6 +29,10 @@ assign next_inst = inst_mem[addr[11:2]];
 
 always_ff @(posedge clk) begin
   if (rst) begin
+    inst <= 32'h00000000;
+  end else if (pipe.stall) begin
+    inst <= inst;
+  end else if (pipe.flush) begin
     inst <= 32'h00000000;
   end else begin
     inst <= next_inst;

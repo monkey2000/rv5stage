@@ -23,7 +23,7 @@ typedef struct packed {
   logic rd_valid;
   logic reg_write;
   logic alu_src;
-  logic pc_src;
+  logic branch;
   logic mem_read;
   logic mem_write;
   logic mem_to_reg;
@@ -36,15 +36,19 @@ typedef struct packed {
   logic [31:0] data;
 } ForwardInfo;
 
-`define STAGE_IF 0
-`define STAGE_ID 1
-`define STAGE_EX 2
-`define STAGE_MEM 3
-`define STAGE_WB 4
+`define PC    0
+`define IF_ID 1
+`define ID_EX 2
+`define EX_MA 3
 
 typedef struct packed {
-  logic [4:0] stall_request;
-  logic [4:0] flush_request;
-} StallSignal;
+  logic stall_req;
+  logic [3:0] flush_req;
+} PipeRequest;
+
+typedef struct packed {
+  logic stall;
+  logic flush;
+} PipeControl;
 
 `endif
