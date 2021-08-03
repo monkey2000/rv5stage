@@ -14,7 +14,6 @@ module decode(
   output DecodeInfo info_ff
 );
 
-assign req.stall_req = 1'b0;
 assign req.flush_req = 4'b0000;
 
 logic [31:0] pc;
@@ -88,12 +87,17 @@ always_comb begin
   endcase
 end
 
+// MA -> EX hazard
+assign req.stall_req = info.enable && info_ff.enable && info_ff.mem_to_reg && ((info.rs1 == info_ff.rd) || (!info.alu_src && info.rs2 == info_ff.rd));
+
 always_ff @ (posedge clk) begin
   if (rst) begin
     info_ff <= 0;
   end else if (pipe.stall) begin
     info_ff <= info_ff;
   end else if (pipe.flush) begin
+    info_ff <= 0;
+  end else if (req.stall_req) begin
     info_ff <= 0;
   end else begin
     info_ff <= info;
