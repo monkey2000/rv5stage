@@ -23,27 +23,45 @@ assign req.stall_req = 1'b0;
 
 logic [31:0] opr1, opr2;
 
-logic forward_opr1_from_exe = info.enable && info_ff.enable && info_ff.rd_valid && info.rs1 == info_ff.rd;
-logic forward_opr2_from_exe = info.enable && info_ff.enable && info_ff.rd_valid && info.rs2 == info_ff.rd;
+// Forward
+logic forward_rs1_from_exe = info.enable && info_ff.enable && info_ff.rd_valid && info.rs1_valid && info.rs1 != 5'b00000 && info.rs1 == info_ff.rd;
+logic forward_rs2_from_exe = info.enable && info_ff.enable && info_ff.rd_valid && info.rs2_valid && info.rs2 != 5'b00000 && info.rs2 == info_ff.rd;
 
-logic forward_opr1_from_mem = info.enable && mem_info.enable && mem_info.rd_valid && info.rs1 == mem_info.rd;
-logic forward_opr2_from_mem = info.enable && mem_info.enable && mem_info.rd_valid && info.rs2 == mem_info.rd;
+logic forward_rs1_from_mem = info.enable && mem_info.enable && mem_info.rd_valid && info.rs1_valid && info.rs1 != 5'b00000 && info.rs1 == mem_info.rd;
+logic forward_rs2_from_mem = info.enable && mem_info.enable && mem_info.rd_valid && info.rs2_valid && info.rs2 != 5'b00000 && info.rs2 == mem_info.rd;
 
-assign opr1 = forward_opr1_from_exe ? alu_out : forward_opr1_from_mem ? mem_out : rs1_data;
-assign opr2 = info.alu_src ? info.imm : forward_opr2_from_exe ? alu_out : forward_opr2_from_mem ? mem_out : rs2_data;
+assign opr1 = forward_rs1_from_exe ? alu_out : forward_rs1_from_mem ? mem_out : rs1_data;
+assign opr2 = info.alu_src ? info.imm : forward_rs2_from_exe ? alu_out : forward_rs2_from_mem ? mem_out : rs2_data;
 
 logic logic_out;
-
+logic [31:0] u_out;
 logic [31:0] out;
 
-// Logic
+// Load immediate
+always_comb begin
+  u_out = info.load_imm ? (info.pc_rel ? info.pc + info.imm : info.imm) : 32'h00000000;
+end
+
+// Branch Logic
 always_comb begin
   case (info.funct3)
-  3'b000: begin
+  3'b000: begin // BEQ
     logic_out = (opr1 == opr2);
   end
-  3'b001: begin
+  3'b001: begin // BNE
     logic_out = (opr1 != opr2);
+  end
+  3'b100: begin // BLT
+    logic_out = $signed(opr1) < $signed(opr2);
+  end
+  3'b101: begin // BGE
+    logic_out = $signed(opr1) >= $signed(opr2);
+  end
+  3'b110: begin // BLTU
+    logic_out = opr1 < opr2;
+  end
+  3'b111: begin // BGEU
+    logic_out = opr1 >= opr2;
   end
   default: begin
     logic_out = 1'b0;
@@ -51,8 +69,17 @@ always_comb begin
   endcase
 end
 
+// Branch and Jump
+logic [31:0] next_pc;
+
 always_comb begin
-  new_pc = info.pc + info.imm;
+  next_pc = info.pc + 32'h00000004;
+  new_pc = info.pc_rel ? info.pc + info.imm : opr1 + info.imm;
+end
+
+always_comb begin
+  pc_w_enable = (info.branch && (logic_out || info.uncond));
+  req.flush_req = (info.branch && (logic_out || info.uncond)) ? 4'b0110 : 4'b0000;
 end
 
 // Arithmetic
@@ -73,17 +100,28 @@ always_comb begin
   5'b?_111_?: begin // ANDI, AND
     out = opr1 & opr2;
   end
+  5'b?_001_?: begin // SLLI, SLL
+    out = opr1 << opr2[4:0];
+  end
+  5'b?_101_0: begin // SRLI, SRL
+    out = opr2 >> opr2[4:0];
+  end
+  5'b?_101_1: begin // SRAI, SRA
+    out = $signed(opr2) >> opr2[4:0];
+  end
+  5'b?_010_?: begin // SLTI, SLT
+    out = ($signed(opr1) < $signed(opr2)) ? 32'h00000001 : 32'h00000000;
+  end
+  5'b?_011_?: begin // SLTIU, SLTU
+    out = (opr1 < opr2) ? 32'h00000001 : 32'h00000000;
+  end
   default: begin
     out = 32'h00000000;
   end
   endcase
 end
 
-always_comb begin
-  pc_w_enable = (info.branch && logic_out);
-  req.flush_req = (info.branch && logic_out) ? 4'b0110 : 4'b0000;
-end
-
+// Dff
 always_ff @ (posedge clk) begin
   if (rst) begin
     alu_out <= 32'h00000000;
@@ -92,10 +130,11 @@ always_ff @ (posedge clk) begin
   end else if (pipe.flush) begin
     alu_out <= 32'h00000000;
   end else begin
-    alu_out <= info.enable ? out : 32'h00000000;
+    alu_out <= info.enable ? (info.load_imm ? u_out : (info.uncond ? next_pc : out)) : 32'h00000000;
   end
 end
 
+// Dff
 always_ff @ (posedge clk) begin
   if (rst) begin
     info_ff <= 0;

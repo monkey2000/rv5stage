@@ -17,16 +17,22 @@ typedef struct packed {
   logic [4:0] rs2;
   logic [31:0] imm;
 
+  logic rd_valid;
+  logic rs1_valid;
+  logic rs2_valid;
+
   logic [2:0] funct3;
   logic [6:0] funct7;
 
-  logic rd_valid;
   logic reg_write;
-  logic alu_src;
-  logic branch;
-  logic mem_read;
-  logic mem_write;
-  logic mem_to_reg;
+  logic alu_src;      // imm enable
+  logic load_imm;     // LUI, AUIPC
+  logic pc_rel;       // AUIPC
+  logic branch;       // J, B
+  logic uncond;       // J
+  logic mem_read;     // Load
+  logic mem_write;    // Store
+  logic mem_to_reg;   // Load
 } DecodeInfo;
 
 typedef struct packed {
