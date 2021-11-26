@@ -1,11 +1,4 @@
-`include "src/rtl/common.sv"
-`include "src/rtl/control.sv"
-`include "src/rtl/fetch.sv"
-`include "src/rtl/decode.sv"
-`include "src/rtl/regfile.sv"
-`include "src/rtl/execute.sv"
-`include "src/rtl/memory.sv"
-`include "src/rtl/writeback.sv"
+`include "common.sv"
 
 module top(
   input logic clk,

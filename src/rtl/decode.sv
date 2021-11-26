@@ -1,7 +1,7 @@
 `ifndef RV5STAGE_DECODE
 `define RV5STAGE_DECODE
 
-`include "src/rtl/common.sv"
+`include "common.sv"
 
 module decode(
   input logic clk,

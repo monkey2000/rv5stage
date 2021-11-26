@@ -1,7 +1,7 @@
 `ifndef RV5STAGE_ICACHE
 `define RV5STAGE_ICACHE
 
-`include "src/rtl/common.sv"
+`include "common.sv"
 
 module icache(
   input logic clk,

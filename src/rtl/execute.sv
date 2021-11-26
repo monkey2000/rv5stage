@@ -1,7 +1,7 @@
 `ifndef RV5STAGE_EXECUTE
 `define RV5STAGE_EXECUTE
 
-`include "src/rtl/common.sv"
+`include "common.sv"
 
 module execute(
   input logic clk,

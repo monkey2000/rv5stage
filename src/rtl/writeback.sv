@@ -1,7 +1,7 @@
 `ifndef RV5STAGE_WRITEBACK
 `define RV5STAGE_WRITEBACK
 
-`include "src/rtl/common.sv"
+`include "common.sv"
 
 module writeback(
   input logic clk,

@@ -1,8 +1,7 @@
 `ifndef RV5STAGE_FETCH
 `define RV5STAGE_FETCH
 
-`include "src/rtl/common.sv"
-`include "src/rtl/icache.sv"
+`include "common.sv"
 
 module fetch(
   input logic clk,

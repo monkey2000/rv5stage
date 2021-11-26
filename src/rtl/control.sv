@@ -1,7 +1,7 @@
 `ifndef RV5STAGE_CONTROL
 `define RV5STAGE_CONTROL
 
-`include "src/rtl/common.sv"
+`include "common.sv"
 
 module control(
   input PipeRequest if_req,

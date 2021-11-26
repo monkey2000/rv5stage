@@ -1,8 +1,7 @@
 `ifndef RV5STAGE_MEMORY
 `define RV5STAGE_MEMORY
 
-`include "src/rtl/common.sv"
-`include "src/rtl/dcache.sv"
+`include "common.sv"
 
 module memory(
   input logic clk,
