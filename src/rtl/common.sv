@@ -57,4 +57,60 @@ typedef struct packed {
   logic flush;
 } PipeControl;
 
+interface SystemBus #(
+  parameter ADDR_WIDTH = 32,
+  parameter DATA_WIDTH = 64,
+  parameter MASK_WIDTH = DATA_WIDTH / 8;
+);
+
+  // ReadWrite Channel
+  logic rw_ready, rw_valid;
+  logic rw_we, w_ce;
+  logic [ADDR_WIDTH-1:0] rw_addr;
+  logic [DATA_WIDTH-1:0] r_data;
+  logic [MASK_WDITH-1:0] w_mask;
+  logic [DATA_WIDTH-1:0] w_data;
+
+  // Invalidation Channel
+  logic inv_ready, inv_valid;
+  logic [ADDR_WIDTH-1:0] inv_addr;
+
+  // System Bus Provider: i.e. System Cache
+  modport provider (
+    // ReadWrite Channel
+    input rw_valid,
+    input rw_addr,
+    input rw_we,
+    output rw_ready,
+    output r_data,
+    input w_mask,
+    input w_data,
+    input w_ce,
+
+    // Invalidation Channel
+    input inv_ready,
+    output inv_valid,
+    output inv_addr
+  );
+
+  // System Bus User: i.e. L1i/L1d
+  modport user (
+    // ReadWrite Channel
+    output rw_valid,
+    output rw_addr,
+    output rw_we,
+    input rw_ready,
+    input r_data,
+    output w_mask,
+    output w_data,
+    output w_ce,
+
+    // Invalidation Channel
+    output inv_ready,
+    input inv_valid,
+    input inv_addr
+  );
+
+endinterface
+
 `endif

@@ -26,13 +26,13 @@ logic [31:0] mem_out;
 PipeRequest if_req, id_req, ex_req, ma_req;
 PipeControl pc_ctrl, if_id_ctrl, id_ex_ctrl, ex_ma_ctrl;
 
-always @ (posedge clk) begin
-  if (rst) begin
-    regfile_r2_data_ff <= 32'h00000000;
-  end else begin
-    regfile_r2_data_ff <= regfile_r2_data;
-  end
-end
+SystemBus bus [1:0];
+
+l2cache l2cache(
+  .clk(clk),
+  .rst(rst),
+  .bus(bus)
+);
 
 control control(
   .if_req(if_req),
@@ -54,7 +54,8 @@ fetch fetch(
   .pc_w_enable(pc_w_enable),
   .pc_data(new_pc),
   .info(fetch_info),
-  .error(fetch_error)
+  .error(fetch_error),
+  .bus(bus[0])
 );
 
 decode decode(
@@ -91,6 +92,7 @@ execute execute(
   .mem_info(memory_info_ff),
   .mem_out(mem_out),
   .alu_out(execute_out),
+  .r2_out(regfile_r2_data_ff),
   .pc_w_enable(pc_w_enable),
   .new_pc(new_pc),
   .info_ff(execute_info_ff)
@@ -104,7 +106,8 @@ memory memory(
   .addr(execute_out),
   .data(regfile_r2_data_ff),
   .mem_out(mem_out),
-  .info_ff(memory_info_ff)
+  .info_ff(memory_info_ff),
+  .bus(bus[1])
 );
 
 writeback writeback(

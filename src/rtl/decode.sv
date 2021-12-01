@@ -117,10 +117,10 @@ assign req.stall_req = info.enable && info_ff.enable && info_ff.mem_to_reg && ((
 always_ff @ (posedge clk) begin
   if (rst) begin
     info_ff <= 0;
-  end else if (pipe.stall) begin
-    info_ff <= info_ff;
   end else if (pipe.flush) begin
     info_ff <= 0;
+  end else if (pipe.stall) begin
+    info_ff <= info_ff;
   end else if (req.stall_req) begin
     info_ff <= 0;
   end else begin

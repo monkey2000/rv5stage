@@ -14,6 +14,7 @@ module execute(
   input DecodeInfo mem_info,
   input logic [31:0] mem_out,
   output logic [31:0] alu_out,
+  output logic [31:0] r2_out,
   output logic pc_w_enable,
   output logic [31:0] new_pc,
   output DecodeInfo info_ff
@@ -125,12 +126,25 @@ end
 always_ff @ (posedge clk) begin
   if (rst) begin
     alu_out <= 32'h00000000;
-  end else if (pipe.stall) begin
-    alu_out <= alu_out;
   end else if (pipe.flush) begin
     alu_out <= 32'h00000000;
+  end else if (pipe.stall) begin
+    alu_out <= alu_out;
   end else begin
     alu_out <= info.enable ? (info.load_imm ? u_out : (info.uncond ? next_pc : out)) : 32'h00000000;
+  end
+end
+
+// Dff
+always_ff @(posedge clk) begin
+  if (rst) begin
+    r2_out <= 32'h00000000;
+  end else if (pipe.flush) begin
+    r2_out <= 32'h00000000;
+  end else if (pipe.stall) begin
+    r2_out <= r2_out;
+  end else begin
+    r2_out <= info.enable ? rs2_data : 32'h00000000;
   end
 end
 
@@ -138,10 +152,10 @@ end
 always_ff @ (posedge clk) begin
   if (rst) begin
     info_ff <= 0;
-  end else if (pipe.stall) begin
-    info_ff <= info_ff;
   end else if (pipe.flush) begin
     info_ff <= 0;
+  end else if (pipe.stall) begin
+    info_ff <= info_ff;
   end else begin
     info_ff <= info;
   end
