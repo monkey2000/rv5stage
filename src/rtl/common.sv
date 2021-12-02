@@ -2,6 +2,7 @@
 `define RV5STAGE_COMMON
 
 typedef struct packed {
+  logic enable;
   logic [31:0] pc;
   logic [31:0] inst;
 } FetchInfo;
