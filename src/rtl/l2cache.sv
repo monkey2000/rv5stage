@@ -10,7 +10,7 @@ module l2cache #(
   parameter MASKW = WIDTH / 8,
   parameter SIZE = 256 * 1024 * 8,  // 256 KiB
   parameter ADDR_WIDTH = 32,
-  parameter BUS_WIDTH = 64
+  parameter string INIT_FILE = ""
 ) (
   input logic clk,
   input logic rst,
@@ -35,7 +35,8 @@ parameter BRAM_ADDR_LSB   = $clog2(WIDTH / 8);
 
 bram #(
   .WIDTH(WIDTH),
-  .DEPTH(SIZE / WIDTH)
+  .DEPTH(SIZE / WIDTH),
+  .INIT_FILE(INIT_FILE)
 ) mem(
   .clk(clk),
   .ena(| bram_w_en),
@@ -71,10 +72,10 @@ read_stat_t read_stat, read_stat_next;
 always_ff @ (posedge clk) begin
   if (rst) begin
     for (integer i = 0; i < PORTS; i = i + 1)
-      r_pri[i] <= ({PORTS{1'b1}} << i);
+      r_pri[i] <= ({{(PORTS-1){1'b0}}, {1'b1}} << i);
   end else if (read_stat == READ_OPER) begin
     for (integer i = 0; i < PORTS; i = i + 1)
-      r_pri[i] <= ({PORTS{1'b1}} << (r_port_sel_ff - i[PORT_WIDTH-1:0]));
+      r_pri[i] <= ({{(PORTS-1){1'b0}}, {1'b1}} << (r_port_sel_ff - i[PORT_WIDTH-1:0]));
   end
 end
 
@@ -165,10 +166,10 @@ write_stat_t write_stat, write_stat_next;
 always_ff @ (posedge clk) begin
   if (rst) begin
     for (integer i = 0; i < PORTS; i = i + 1)
-      w_pri[i] <= ({PORTS{1'b1}} << i);
+      w_pri[i] <= ({{(PORTS-1){1'b0}}, {1'b1}} << i);
   end if (write_stat == WRITE_OPER) begin
     for (integer i = 0; i < PORTS; i = i + 1)
-      w_pri[i] <= ({PORTS{1'b1}} << (w_port_sel_ff - i[PORT_WIDTH-1:0]));
+      w_pri[i] <= ({{(PORTS-1){1'b0}}, {1'b1}} << (w_port_sel_ff - i[PORT_WIDTH-1:0]));
   end
 end
 
@@ -299,7 +300,7 @@ endgenerate
 logic bus_rw_ready [PORTS-1:0];
 generate
   for (genvar i = 0; i < PORTS; i = i + 1) begin
-    assign bus_rw_ready[i] = bus[i].rw_ready;
+    assign bus[i].rw_ready = bus_rw_ready[i];
   end
 endgenerate
 

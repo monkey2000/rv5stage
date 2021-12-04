@@ -14,3 +14,6 @@ default:
 	@echo "-- RUN ---------------------"
 	obj_dir/Vtop
 	@echo "-- DONE --------------------"
+
+wave: logs/vlt_dump.vcd
+	gtkwave logs/vlt_dump.vcd &

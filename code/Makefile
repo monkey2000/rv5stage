@@ -12,12 +12,13 @@ HEX_FILES = $(patsubst %.s,%.hex,$(ASM_FILES))
 all: $(HEX_FILES) $(DIS_FILES)
 
 clean:
-	rm -f $(BIN_FILES)
+	rm -f $(DIS_FILES)
 	rm -f $(HEX_FILES)
 
 asm/%.hex: asm/%.elf
 	$(OBJCOPY) -O binary $< $@.tmp
 	xxd -p -c 16 $@.tmp | ./rev_pad.py > $@
+	rm $@.tmp
 
 asm/%.obj: asm/%.s
 	$(CC) -march=rv32i -c $< -o $@

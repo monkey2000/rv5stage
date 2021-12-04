@@ -122,7 +122,7 @@ always_ff @ (posedge clk) begin
   end
 end
 
-assign req.stall_req = !dcache_ready;
+assign req.stall_req = !dcache_ready && info.enable && info.mem_to_reg;
 assign req.flush_req = 4'b0000;
 
 endmodule

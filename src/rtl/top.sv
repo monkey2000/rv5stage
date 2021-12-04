@@ -28,7 +28,9 @@ PipeControl pc_ctrl, if_id_ctrl, id_ex_ctrl, ex_ma_ctrl;
 
 SystemBus bus [1:0];
 
-l2cache l2cache(
+l2cache #(
+  .INIT_FILE("data/icache.dat")
+) l2cache (
   .clk(clk),
   .rst(rst),
   .bus(bus)
