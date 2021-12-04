@@ -19,6 +19,7 @@ module fetch(
 );
 
 logic [31:0] pc, shadow_pc, to_icache_pc, inst, last_pc;
+logic current_pc_drop;
 logic shadow_pc_pending;
 logic ic_error;
 logic enable, last_enable;
@@ -40,10 +41,22 @@ always_ff @ (posedge clk) begin
     shadow_pc_pending <= 0;
   end else if (pc_w_enable && pc_pipe.stall) begin
     shadow_pc_pending <= 1;
-  end else if (shadow_pc_pending && !pc_pipe.stall) begin
+  end else if (shadow_pc_pending && !current_pc_drop && !pc_pipe.stall) begin
     shadow_pc_pending <= 0;
   end else begin
-    shadow_pc_pending <= 0;
+    shadow_pc_pending <= shadow_pc_pending;
+  end
+end
+
+always_ff @ (posedge clk) begin
+  if (rst) begin
+    current_pc_drop <= 0;
+  end else if (pc_w_enable && pc_pipe.stall) begin
+    current_pc_drop <= 1;
+  end else if (current_pc_drop && !pc_pipe.stall) begin
+    current_pc_drop <= 0;
+  end else begin
+    current_pc_drop <= current_pc_drop;
   end
 end
 
@@ -52,9 +65,9 @@ always_comb begin
     to_icache_pc = 32'h80000000;
   end else if (pc_w_enable) begin
     to_icache_pc = pc_data;
-  end else if (shadow_pc_pending) begin
+  end else if (shadow_pc_pending && !current_pc_drop) begin
     to_icache_pc = shadow_pc;
-  end begin
+  end else begin
     to_icache_pc = pc + 32'h4;
   end
 end
