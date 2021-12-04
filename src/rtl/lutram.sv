@@ -13,8 +13,8 @@ module lutram #(
   input logic [ADDRW-1:0] dpra,
   input logic [WIDTH-1:0] di,
   output logic [WIDTH-1:0] spo,
-  output logic [WIDTH-1:0] dpo,
-)
+  output logic [WIDTH-1:0] dpo
+);
 
 (* ram_style = "distributed" *) logic [WIDTH-1:0] mem [DEPTH-1:0];
 

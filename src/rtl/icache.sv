@@ -30,7 +30,7 @@ snoopy_rocache icache(
   .we(0),
   .ce(0),
   .bus(bus)
-)
+);
 
 // Valid range: [0x80000000, 0x80040000) 256KiB
 assign error = addr[1:0] != 2'b00 || addr >= 32'h80040000 || addr < 32'h80000000;

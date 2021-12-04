@@ -1,6 +1,8 @@
+`include "common.sv"
+
 module snoopy_rocache #(
   parameter WIDTH = 128,
-  parameter MASKW = $clog2(WIDTH / 8),
+  parameter MASKW = WIDTH / 8,
   parameter SIZE = 4 * 1024 * 8,    // 4 KiB
   parameter DEPTH = SIZE / WIDTH,
   parameter ADDR_WIDTH = 32
@@ -15,7 +17,7 @@ module snoopy_rocache #(
   input   logic [WIDTH-1:0] wdata,
   output  logic [WIDTH-1:0] rdata,
   input   logic we,
-  input   logic ce
+  input   logic ce,
 
   SystemBus.user bus
 );
@@ -99,7 +101,7 @@ lutram #(
   .DEPTH(DEPTH)
 ) tag_ram (
   .clk(clk),
-  .we(tag_ram_rw_wen)
+  .we(tag_ram_rw_wen),
   .a(tag_ram_rw_addr),
   .dpra(tag_ram_r_addr),
   .di(tag_ram_rw_wdata),
@@ -227,7 +229,7 @@ end
 
 // write FSM
 always_comb begin
-  unique case (write_stat) begin
+  unique case (write_stat)
   WRITE_IDLE: begin
     if (valid && we) write_stat_next = WRITE_BUS;
     else write_stat_next = WRITE_IDLE;
@@ -258,7 +260,7 @@ always_comb begin
   ready = 0;
 
   if (valid && !we) begin
-    if ((reill_stat == REFILL_IDLE && read_hit) || refill_stat_next == REFILL_OPER) begin
+    if ((refill_stat == REFILL_IDLE && read_hit) || refill_stat_next == REFILL_OPER) begin
       ready = 1;
     end
   end else if (valid && we) begin
@@ -296,7 +298,7 @@ end
 // ====================
 // invalidate FSM
 always_comb begin
-  case (inv_stat) begin
+  unique case (inv_stat)
   INV_IDLE: begin
     if (bus.inv_valid) inv_stat_next = INV_PENDING;
     else inv_stat_next = INV_IDLE;

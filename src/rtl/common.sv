@@ -60,8 +60,8 @@ typedef struct packed {
 
 interface SystemBus #(
   parameter ADDR_WIDTH = 32,
-  parameter DATA_WIDTH = 64,
-  parameter MASK_WIDTH = DATA_WIDTH / 8;
+  parameter DATA_WIDTH = 128,
+  parameter MASK_WIDTH = DATA_WIDTH / 8
 );
 
   // ReadWrite Channel
@@ -69,7 +69,7 @@ interface SystemBus #(
   logic rw_we, w_ce;
   logic [ADDR_WIDTH-1:0] rw_addr;
   logic [DATA_WIDTH-1:0] r_data;
-  logic [MASK_WDITH-1:0] w_mask;
+  logic [MASK_WIDTH-1:0] w_mask;
   logic [DATA_WIDTH-1:0] w_data;
 
   // Invalidation Channel

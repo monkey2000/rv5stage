@@ -74,7 +74,7 @@ always_comb begin
     dcache_valid = 1;
     dcache_we = 1;
     dcache_wmask = wmask;
-    dcache_wdata = data << (addr[3:0] * 8);
+    dcache_wdata = {{96{1'b0}}, data} << (addr[3:0] * 8);
   end
 end
 

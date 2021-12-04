@@ -66,7 +66,7 @@ always_ff @(posedge clk) begin
     pc <= 32'h80000000;
   end else if (pc_pipe.stall) begin
     pc <= pc;
-  end else
+  end else begin
     pc <= to_icache_pc;
   end
 end
