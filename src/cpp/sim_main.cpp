@@ -10,6 +10,13 @@ uint32_t inspect_value(Vtop *top, int pos) {
     return top->rootp->top__DOT__regfile__DOT__regs[pos];
 }
 
+void print_regfile(Vtop *top) {
+    std::cout << "========== " << std::dec << global_ticks << " ==========" << std::endl;
+    for (int i = 0; i < 32; i++) {
+        std::cout << "Reg[" << std::dec << i << "] = " << std::hex << inspect_value(top, i) << std::endl;
+    }
+}
+
 int main(int argc, char **argv, char **env) {
     Verilated::commandArgs(argc, argv);
     Vtop *top = new Vtop;
@@ -37,13 +44,14 @@ int main(int argc, char **argv, char **env) {
 
         top->eval();
         tfp->dump(global_ticks);
+        if (global_ticks % 10 == 0) {
+            print_regfile(top);
+        }
     }
 
     std::cout << "Simulation Finished" << std::endl;
 
-    for (int i = 0; i < 32; i++) {
-        std::cout << "Reg[" << std::dec << i << "] = " << std::hex << inspect_value(top, i) << std::endl;
-    }
+    print_regfile(top);
 
     tfp->close();
     delete tfp;

@@ -19,6 +19,8 @@ module memory(
 logic error;
 assign error = addr[1:0] != 2'b00 || addr >= 32'h80040000 || addr < 32'h80000000;
 
+logic [31:0] mem_pc = info.pc;
+
 logic dcache_valid;
 logic dcache_ready;
 logic dcache_we;
@@ -47,10 +49,10 @@ always_comb begin
     wmask = 16'h0001 << addr[3:0];
   end
   3'b001: begin
-    wmask = 16'h0002 << addr[3:0];
+    wmask = 16'h0003 << addr[3:0];
   end
   3'b010: begin
-    wmask = 16'h0004 << addr[3:0];
+    wmask = 16'h000f << addr[3:0];
   end
   default: begin
     wmask = 0;
@@ -117,12 +119,14 @@ end
 always_ff @ (posedge clk) begin
   if (rst) begin
     info_ff <= 0;
+  end else if (req.stall_req) begin
+    info_ff <= 0;
   end else begin
     info_ff <= info;
   end
 end
 
-assign req.stall_req = !dcache_ready && info.enable && info.mem_to_reg;
+assign req.stall_req = !dcache_ready && info.enable && (info.mem_read || info.mem_write);
 assign req.flush_req = 4'b0000;
 
 endmodule

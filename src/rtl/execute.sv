@@ -22,7 +22,9 @@ module execute(
 
 assign req.stall_req = 1'b0;
 
-logic [31:0] opr1, opr2;
+logic [31:0] exe_pc = info.pc;
+
+logic [31:0] opr1, forward_rs2, opr2;
 
 // Forward
 logic forward_rs1_from_exe = info.enable && info_ff.enable && info_ff.rd_valid && info.rs1_valid && info.rs1 != 5'b00000 && info.rs1 == info_ff.rd;
@@ -32,7 +34,8 @@ logic forward_rs1_from_mem = info.enable && mem_info.enable && mem_info.rd_valid
 logic forward_rs2_from_mem = info.enable && mem_info.enable && mem_info.rd_valid && info.rs2_valid && info.rs2 != 5'b00000 && info.rs2 == mem_info.rd;
 
 assign opr1 = forward_rs1_from_exe ? alu_out : forward_rs1_from_mem ? mem_out : rs1_data;
-assign opr2 = info.alu_src ? info.imm : forward_rs2_from_exe ? alu_out : forward_rs2_from_mem ? mem_out : rs2_data;
+assign forward_rs2 = forward_rs2_from_exe ? alu_out : forward_rs2_from_mem ? mem_out : rs2_data;
+assign opr2 = info.alu_src ? info.imm : forward_rs2;
 
 logic logic_out;
 logic [31:0] u_out;
@@ -122,6 +125,12 @@ always_comb begin
   endcase
 end
 
+// Memory AddrGen
+logic [31:0] addr_gen;
+always_comb begin
+  addr_gen = opr1 + info.imm;
+end
+
 // Dff
 always_ff @ (posedge clk) begin
   if (rst) begin
@@ -131,7 +140,7 @@ always_ff @ (posedge clk) begin
   end else if (pipe.stall) begin
     alu_out <= alu_out;
   end else begin
-    alu_out <= info.enable ? (info.load_imm ? u_out : (info.uncond ? next_pc : out)) : 32'h00000000;
+    alu_out <= info.enable ? (info.load_imm ? u_out : (info.uncond ? next_pc : ((info.mem_read || info.mem_write) ? addr_gen : out))) : 32'h00000000;
   end
 end
 
@@ -144,7 +153,7 @@ always_ff @(posedge clk) begin
   end else if (pipe.stall) begin
     r2_out <= r2_out;
   end else begin
-    r2_out <= info.enable ? rs2_data : 32'h00000000;
+    r2_out <= info.enable ? forward_rs2 : 32'h00000000;
   end
 end
 

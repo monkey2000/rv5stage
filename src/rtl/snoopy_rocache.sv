@@ -60,8 +60,7 @@ logic [ADDR_WIDTH-1:0]      inv_addr;
 typedef enum {
   REFILL_IDLE = 0,
   REFILL_BUS,
-  REFILL_OPER,
-  REFILL_RESP
+  REFILL_OPER
 } refill_stat_t;
 
 refill_stat_t refill_stat, refill_stat_next;
@@ -220,7 +219,7 @@ always_ff @ (posedge clk) begin
 end
 
 always_comb begin
-  rdata = (refill_stat == REFILL_OPER) ? refill_data : data_ram_r_data;
+  rdata = data_ram_r_data;
 end
 
 // ====================
@@ -260,7 +259,7 @@ always_comb begin
   ready = 0;
 
   if (valid && !we) begin
-    if ((refill_stat == REFILL_IDLE && read_hit) || refill_stat_next == REFILL_OPER) begin
+    if (refill_stat == REFILL_IDLE && read_hit) begin
       ready = 1;
     end
   end else if (valid && we) begin

@@ -157,8 +157,8 @@ endgenerate
 
 typedef enum {
   WRITE_IDLE = 0,
-  WRITE_BROADCAST,
   WRITE_OPER,
+  WRITE_BROADCAST,
   WRITE_RESP
 } write_stat_t;
 write_stat_t write_stat, write_stat_next;
@@ -207,8 +207,8 @@ logic [ADDR_WIDTH-1:0] bus_inv_addr [PORTS-1:0];
 
 generate
   for (genvar i = 0; i < PORTS; i = i + 1) begin
-    assign bus_inv_valid[i] = bus[i].inv_valid;
-    assign bus_inv_addr[i] = bus[i].inv_addr;
+    assign bus[i].inv_valid = bus_inv_valid[i];
+    assign bus[i].inv_addr = bus_inv_addr[i];
   end
 endgenerate
 
@@ -254,7 +254,7 @@ always_comb begin
   bram_w_addr = 0;
   bram_w_data = 0;
 
-  if (read_stat == WRITE_OPER) begin
+  if (write_stat == WRITE_OPER) begin
     bram_w_en = bus_w_mask[w_port_sel_ff];
     bram_w_addr = bus_rw_addr[w_port_sel_ff];
     bram_w_data = bus_w_data[w_port_sel_ff];
@@ -286,6 +286,14 @@ always_comb begin
   default:
     write_stat_next = WRITE_IDLE;
   endcase
+end
+
+always_ff @ (posedge clk) begin
+  if (rst) begin
+    write_stat <= READ_IDLE;
+  end else begin
+    write_stat <= write_stat_next;
+  end
 end
 
 // ====================

@@ -5,6 +5,8 @@ module regfile(
   input logic clk,
   input logic rst,
 
+  input PipeControl pipe,
+
   input logic [4:0] r1_addr,
   output logic [31:0] r1_data,
 
@@ -21,6 +23,10 @@ logic [31:0] regs [0:31];
 always_ff @ (posedge clk) begin
   if (rst) begin
     r1_data <= 32'h00000000;
+  end else if (pipe.flush) begin
+    r1_data <= 32'h00000000;
+  end else if (pipe.stall) begin
+    r1_data <= r1_data;
   end else if (r1_addr == 5'b00000) begin
     r1_data <= 32'h00000000;
   end else if (w_enable && r1_addr == w_addr) begin
@@ -33,8 +39,10 @@ end
 always_ff @ (posedge clk) begin
   if (rst) begin
     r2_data <= 32'h00000000;
-  end else if (r2_addr == 5'b00000) begin
+  end else if (pipe.flush) begin
     r2_data <= 32'h00000000;
+  end else if (pipe.stall) begin
+    r2_data <= r2_data;
   end else if (w_enable && r2_addr == w_addr) begin
     r2_data <= w_data;
   end else begin

@@ -67,6 +67,8 @@ always_comb begin
     to_icache_pc = pc_data;
   end else if (shadow_pc_pending && !current_pc_drop) begin
     to_icache_pc = shadow_pc;
+  end else if (if_id_pipe.stall) begin
+    to_icache_pc = pc;
   end else begin
     to_icache_pc = pc + 32'h4;
   end
@@ -88,9 +90,9 @@ always_ff @(posedge clk) begin
   if (rst) begin
     enable <= 0;
   end else if (pc_pipe.flush) begin
-    enable <= 1;
-  end else if (pc_pipe.stall) begin
     enable <= 0;
+  end else if (pc_pipe.stall) begin
+    enable <= 1;
   end else begin
     enable <= 1;
   end
@@ -99,6 +101,12 @@ end
 always_ff @(posedge clk) begin
   if (rst) begin
     last_pc <= 32'h80000000;
+  end else if (if_id_pipe.flush) begin
+    last_pc <= 32'h80000000;
+  end else if (if_id_pipe.stall) begin
+    last_pc <= last_pc;
+  end else if (req.stall_req) begin
+    last_pc <= 32'h80000000;
   end else begin
     last_pc <= pc;
   end
@@ -106,6 +114,12 @@ end
 
 always_ff @(posedge clk) begin
   if (rst) begin
+    last_enable <= 0;
+  end else if (if_id_pipe.flush) begin
+    last_enable <= 0;
+  end else if (if_id_pipe.stall) begin
+    last_enable <= last_enable;
+  end else if (req.stall_req) begin
     last_enable <= 0;
   end else begin
     last_enable <= enable;

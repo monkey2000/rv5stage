@@ -74,6 +74,7 @@ decode decode(
 regfile regfile(
   .clk(clk),
   .rst(rst),
+  .pipe(id_ex_ctrl),
   .r1_addr(decode_info.rs1),
   .r1_data(regfile_r1_data),
   .r2_addr(decode_info.rs2),
