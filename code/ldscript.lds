@@ -2,6 +2,7 @@ SECTIONS
 {
   . = 0x800000000;
   .text : {
+    KEEP(*(.entrypoint)) 
     *(.text*)
   }
 

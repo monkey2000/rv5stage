@@ -4,27 +4,48 @@ LD = $(CROSS_PREFIX)ld
 OBJDUMP = $(CROSS_PREFIX)objdump
 OBJCOPY = $(CROSS_PREFIX)objcopy
 
+CFLAGS = -march=rv32i -ffreestanding -nostdlib -nostartfiles
 
 ASM_FILES = $(wildcard asm/*.s)
-DIS_FILES = $(patsubst %.s,%.dis,$(ASM_FILES))
-HEX_FILES = $(patsubst %.s,%.hex,$(ASM_FILES))
+ASM_DIS_FILES = $(patsubst %.s,%.dis,$(ASM_FILES))
+ASM_HEX_FILES = $(patsubst %.s,%.hex,$(ASM_FILES))
 
-all: $(HEX_FILES) $(DIS_FILES)
+C_FILES = $(wildcard c/*.c)
+C_DIS_FILES = $(patsubst %.c,%.dis,$(C_FILES))
+C_HEX_FILES = $(patsubst %.c,%.hex,$(C_FILES))
+
+all: $(ASM_DIS_FILES) $(ASM_HEX_FILES) $(C_DIS_FILES) $(C_HEX_FILES)
 
 clean:
-	rm -f $(DIS_FILES)
-	rm -f $(HEX_FILES)
+	rm -f $(ASM_DIS_FILES)
+	rm -f $(ASM_HEX_FILES)
+	rm -f $(C_DIS_FILES)
+	rm -f $(C_HEX_FILES)
+
+asm/%.obj: asm/%.s
+	$(CC) $(CFLAGS) -c $< -o $@
+
+asm/%.elf: asm/%.obj
+	$(LD) -T ldscript.lds -e _start -o $@ $^
 
 asm/%.hex: asm/%.elf
 	$(OBJCOPY) -O binary $< $@.tmp
 	xxd -p -c 16 $@.tmp | ./rev_pad.py > $@
 	rm $@.tmp
 
-asm/%.obj: asm/%.s
-	$(CC) -march=rv32i -c $< -o $@
+asm/%.dis: asm/%.elf
+	$(OBJDUMP) -d $< > $@
 
-asm/%.elf: asm/%.obj
+c/%.obj: c/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+c/%.elf: c/%.obj
 	$(LD) -T ldscript.lds -e _start -o $@ $^
 
-asm/%.dis: asm/%.elf
+c/%.hex: c/%.elf
+	$(OBJCOPY) -O binary $< $@.tmp
+	xxd -p -c 16 $@.tmp | ./rev_pad.py > $@
+	rm $@.tmp
+
+c/%.dis: c/%.elf
 	$(OBJDUMP) -d $< > $@

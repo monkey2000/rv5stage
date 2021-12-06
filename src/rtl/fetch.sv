@@ -77,8 +77,8 @@ end
 always_ff @(posedge clk) begin
   if (rst) begin
     pc <= 32'h80000000 - 32'h4;
-  end else if (pc_pipe.flush) begin
-    pc <= 32'h80000000;
+  // end else if (pc_pipe.flush) begin
+  //   pc <= 32'h80000000;
   end else if (pc_pipe.stall) begin
     pc <= pc;
   end else begin
@@ -89,10 +89,12 @@ end
 always_ff @(posedge clk) begin
   if (rst) begin
     enable <= 0;
-  end else if (pc_pipe.flush) begin
+  end else if (pc_pipe.flush && (!pc_w_enable)) begin
     enable <= 0;
   end else if (pc_pipe.stall) begin
-    enable <= 1;
+    enable <= enable;
+  end else if (req.stall_req) begin
+    enable <= 0;
   end else begin
     enable <= 1;
   end
@@ -105,8 +107,8 @@ always_ff @(posedge clk) begin
     last_pc <= 32'h80000000;
   end else if (if_id_pipe.stall) begin
     last_pc <= last_pc;
-  end else if (req.stall_req) begin
-    last_pc <= 32'h80000000;
+  // end else if (req.stall_req) begin
+  //   last_pc <= 32'h80000000;
   end else begin
     last_pc <= pc;
   end
@@ -119,10 +121,10 @@ always_ff @(posedge clk) begin
     last_enable <= 0;
   end else if (if_id_pipe.stall) begin
     last_enable <= last_enable;
-  end else if (req.stall_req) begin
-    last_enable <= 0;
+  // end else if (req.stall_req) begin
+  //   last_enable <= 0;
   end else begin
-    last_enable <= enable;
+    last_enable <= enable && (!shadow_pc_pending);
   end
 end
 

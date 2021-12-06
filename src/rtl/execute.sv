@@ -83,7 +83,7 @@ end
 
 always_comb begin
   pc_w_enable = (info.branch && (logic_out || info.uncond));
-  req.flush_req = (info.branch && (logic_out || info.uncond)) ? 4'b0110 : 4'b0000;
+  req.flush_req = (info.branch && (logic_out || info.uncond)) ? 4'b0111 : 4'b0000;
 end
 
 // Arithmetic

@@ -2,8 +2,11 @@
 
 module top(
   input logic clk,
+  input logic uart_clk8,
+  input logic uart_clk,
   input logic rst,
-  output logic error
+  output logic error,
+  output logic uart_tx
 );
 
 logic [31:0] fetch_inst;
@@ -23,6 +26,9 @@ logic [31:0] new_pc;
 
 logic [31:0] mem_out;
 
+logic uart_ready, uart_valid;
+logic [7:0] uart_data;
+
 PipeRequest if_req, id_req, ex_req, ma_req;
 PipeControl pc_ctrl, if_id_ctrl, id_ex_ctrl, ex_ma_ctrl;
 
@@ -34,6 +40,17 @@ l2cache #(
   .clk(clk),
   .rst(rst),
   .bus(bus)
+);
+
+uart_ctrl uart (
+  .clk(clk),
+  .uart_clk8(uart_clk8),
+  .uart_clk(uart_clk),
+  .rst(rst),
+  .valid(uart_valid),
+  .ready(uart_ready),
+  .data(uart_data),
+  .uart_tx(uart_tx)
 );
 
 control control(
@@ -108,6 +125,11 @@ memory memory(
   .info(execute_info_ff),
   .addr(execute_out),
   .data(regfile_r2_data_ff),
+
+  .uart_valid(uart_valid),
+  .uart_ready(uart_ready),
+  .uart_data(uart_data),
+
   .mem_out(mem_out),
   .info_ff(memory_info_ff),
   .bus(bus[1])

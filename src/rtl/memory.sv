@@ -10,6 +10,11 @@ module memory(
   input DecodeInfo info,
   input logic [31:0] addr,
   input logic [31:0] data,
+
+  output logic uart_valid,
+  input logic uart_ready,
+  output logic [7:0] uart_data,
+
   output logic [31:0] mem_out,
   output DecodeInfo info_ff,
 
@@ -67,16 +72,26 @@ always_comb begin
   dcache_wmask = 0;
   dcache_wdata = 0;
 
-  if (info.mem_read) begin
+  if (info.mem_read && addr < 32'he0000000) begin
     dcache_valid = 1;
     dcache_we = 0;
     dcache_wmask = 0;
     dcache_wdata = 0;
-  end else if (info.mem_write) begin
+  end else if (info.mem_write && addr < 32'he0000000) begin
     dcache_valid = 1;
     dcache_we = 1;
     dcache_wmask = wmask;
     dcache_wdata = {{96{1'b0}}, data} << (addr[3:0] * 8);
+  end
+end
+
+always_comb begin
+  uart_valid = 0;
+  uart_data = 0;
+
+  if (info.mem_write && addr == 32'he0000000) begin
+    uart_valid = 1;
+    uart_data = data[7:0];
   end
 end
 
@@ -126,7 +141,10 @@ always_ff @ (posedge clk) begin
   end
 end
 
-assign req.stall_req = !dcache_ready && info.enable && (info.mem_read || info.mem_write);
+logic mem_stall_req = !dcache_ready && info.enable && (info.mem_read || info.mem_write) && addr < 32'he0000000;
+logic uart_stall_req = !uart_ready && info.enable && info.mem_write && addr == 32'he0000000;
+
+assign req.stall_req = mem_stall_req || uart_stall_req;
 assign req.flush_req = 4'b0000;
 
 endmodule

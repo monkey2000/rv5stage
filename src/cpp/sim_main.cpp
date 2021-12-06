@@ -2,6 +2,7 @@
 #include "Vtop.h"
 #include "verilated.h"
 #include "Vtop___024root.h"
+#include "clock_gen.hpp"
 #include <verilated_vcd_c.h>
 uint64_t global_ticks = 0;
 
@@ -28,25 +29,34 @@ int main(int argc, char **argv, char **env) {
     Verilated::mkdir("logs");
     tfp->open("logs/vlt_dump.vcd");
 
-    while (!Verilated::gotFinish() && global_ticks < 1000) {
-        global_ticks++;
-        if (global_ticks % 10 == 0) {
-            top->clk = 1;
-        } else if (global_ticks % 10 == 5) {
-            top->clk = 0;
-        }
+    clock_gen system_clk(10000 / 2);  // 10000ps 10MHz
+    clock_gen uart_clk8(1085069 / 2); // 1085069ps 921600Hz
+    clock_gen uart_clk(8680555 / 2);  // 8680555ps 115200bps
 
-        if (global_ticks < 19) {
-            top->rst = 1;
-        } else {
-            top->rst = 0;
-        }
+    top->clk = 0;
+    top->uart_clk8 = 0;
+    top->uart_clk = 0;
+    top->rst = 1;
 
+    while (!Verilated::gotFinish() && global_ticks < 10000 * 10000) {
         top->eval();
         tfp->dump(global_ticks);
-        if (global_ticks % 10 == 0) {
-            print_regfile(top);
-        }
+        tfp->flush();
+        if (global_ticks > 50)
+            top->rst = 0;
+
+        uint64_t min_to_next_tick = system_clk.time_to_edge();
+
+        if (uart_clk8.time_to_edge() < min_to_next_tick)
+            min_to_next_tick = uart_clk8.time_to_edge();
+
+        if (uart_clk.time_to_edge() < min_to_next_tick)
+            min_to_next_tick = uart_clk.time_to_edge();
+
+        top->clk = system_clk.advance(min_to_next_tick);
+        top->uart_clk8 = uart_clk8.advance(min_to_next_tick);
+        top->uart_clk = uart_clk.advance(min_to_next_tick);
+        global_ticks += min_to_next_tick;
     }
 
     std::cout << "Simulation Finished" << std::endl;
