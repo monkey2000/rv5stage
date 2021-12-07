@@ -1,5 +1,3 @@
-#define ENTRY __attribute__((__section__(".entrypoint")))
-
 volatile char *uart_mmio = (volatile char *) 0xe0000000;
 
 void uart_write(char c) {
@@ -12,7 +10,7 @@ void uart_print(char *p) {
   }
 }
 
-void ENTRY _start() {
+void main() {
   uart_print("Hello World!");
   while (1);
 }

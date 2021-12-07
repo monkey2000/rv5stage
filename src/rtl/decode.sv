@@ -101,7 +101,7 @@ always_comb begin
       error = 1'b0;
     end
     7'b1100111: begin // J type - JALR
-      info = '{1'b1, pc, opcode, rd, rs1, rs2, imm_j, 1'b1, 1'b1, 1'b0, funct3, funct7, 1'b1, 1'b1, 1'b0, 1'b0, 1'b1, 1'b1, 1'b0, 1'b0, 1'b0};
+      info = '{1'b1, pc, opcode, rd, rs1, rs2, imm_i, 1'b1, 1'b1, 1'b0, funct3, funct7, 1'b1, 1'b1, 1'b0, 1'b0, 1'b1, 1'b1, 1'b0, 1'b0, 1'b0};
       error = 1'b0;
     end
     default: begin
@@ -119,14 +119,14 @@ end
 // MA -> EX hazard
 logic ma_ex_hazard = info.enable && info_ff.enable && info_ff.mem_to_reg && ((info.rs1_valid && info.rs1 != 5'b00000 && info.rs1 == info_ff.rd) || (info.rs2_valid && info.rs2 != 5'b00000 && info.rs2 == info_ff.rd));
 
-assign req.stall_req = ma_ex_hazard;
+assign req.stall_req = (!pipe.stall) && ma_ex_hazard;
 
 always_ff @ (posedge clk) begin
   if (rst) begin
     info_ff <= 0;
   end else if (pipe.flush) begin
     info_ff <= 0;
-  end else if (pipe.stall) begin
+  end else if (pipe.stall && (!req.stall_req)) begin
     info_ff <= info_ff;
   end else if (req.stall_req) begin
     info_ff <= 0;

@@ -54,9 +54,6 @@ logic [TAG_LINE_WIDTH-1:0]  tag_ram_rw_wdata;
 logic [TAG_LINE_WIDTH-1:0]  tag_ram_rw_rdata;
 logic [TAG_LINE_WIDTH-1:0]  tag_ram_r_data;
 
-logic inv_pending;
-logic [ADDR_WIDTH-1:0]      inv_addr;
-
 typedef enum {
   REFILL_IDLE = 0,
   REFILL_BUS,

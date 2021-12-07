@@ -14,13 +14,16 @@ C_FILES = $(wildcard c/*.c)
 C_DIS_FILES = $(patsubst %.c,%.dis,$(C_FILES))
 C_HEX_FILES = $(patsubst %.c,%.hex,$(C_FILES))
 
-all: $(ASM_DIS_FILES) $(ASM_HEX_FILES) $(C_DIS_FILES) $(C_HEX_FILES)
+all: bl/bootloader.obj $(ASM_DIS_FILES) $(ASM_HEX_FILES) $(C_DIS_FILES) $(C_HEX_FILES)
 
 clean:
 	rm -f $(ASM_DIS_FILES)
 	rm -f $(ASM_HEX_FILES)
 	rm -f $(C_DIS_FILES)
 	rm -f $(C_HEX_FILES)
+
+bl/bootloader.obj: bl/bootloader.s
+	$(CC) $(CFLAGS) -c $< -o $@
 
 asm/%.obj: asm/%.s
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -39,7 +42,7 @@ asm/%.dis: asm/%.elf
 c/%.obj: c/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-c/%.elf: c/%.obj
+c/%.elf: c/%.obj bl/bootloader.obj
 	$(LD) -T ldscript.lds -e _start -o $@ $^
 
 c/%.hex: c/%.elf

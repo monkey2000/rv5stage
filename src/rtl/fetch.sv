@@ -91,7 +91,7 @@ always_ff @(posedge clk) begin
     enable <= 0;
   end else if (pc_pipe.flush && (!pc_w_enable)) begin
     enable <= 0;
-  end else if (pc_pipe.stall) begin
+  end else if (pc_pipe.stall && (!req.stall_req)) begin
     enable <= enable;
   end else if (req.stall_req) begin
     enable <= 0;

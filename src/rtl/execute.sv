@@ -25,6 +25,8 @@ assign req.stall_req = 1'b0;
 logic [31:0] exe_pc = info.pc;
 
 logic [31:0] opr1, forward_rs2, opr2;
+logic [31:0] opr1_ff, forward_rs2_ff, opr2_ff;
+logic stall_ff;
 
 // Forward
 logic forward_rs1_from_exe = info.enable && info_ff.enable && info_ff.rd_valid && info.rs1_valid && info.rs1 != 5'b00000 && info.rs1 == info_ff.rd;
@@ -33,9 +35,35 @@ logic forward_rs2_from_exe = info.enable && info_ff.enable && info_ff.rd_valid &
 logic forward_rs1_from_mem = info.enable && mem_info.enable && mem_info.rd_valid && info.rs1_valid && info.rs1 != 5'b00000 && info.rs1 == mem_info.rd;
 logic forward_rs2_from_mem = info.enable && mem_info.enable && mem_info.rd_valid && info.rs2_valid && info.rs2 != 5'b00000 && info.rs2 == mem_info.rd;
 
-assign opr1 = forward_rs1_from_exe ? alu_out : forward_rs1_from_mem ? mem_out : rs1_data;
-assign forward_rs2 = forward_rs2_from_exe ? alu_out : forward_rs2_from_mem ? mem_out : rs2_data;
-assign opr2 = info.alu_src ? info.imm : forward_rs2;
+assign opr1 = stall_ff ? opr1_ff : forward_rs1_from_exe ? alu_out : forward_rs1_from_mem ? mem_out : rs1_data;
+assign forward_rs2 = stall_ff ? forward_rs2_ff : forward_rs2_from_exe ? alu_out : forward_rs2_from_mem ? mem_out : rs2_data;
+assign opr2 = stall_ff ? opr2_ff : info.alu_src ? info.imm : forward_rs2;
+
+always_ff @ (posedge clk) begin
+  if (rst) begin
+    stall_ff <= 1'b0;
+  end else if (pipe.stall) begin
+    stall_ff <= 1'b1;
+  end else begin
+    stall_ff <= 1'b0;
+  end
+end
+
+always_ff @ (posedge clk) begin
+  if (rst) begin
+    opr1_ff <= 0;
+    forward_rs2_ff <= 0;
+    opr2_ff <= 0;
+  end if ((!stall_ff) && pipe.stall) begin
+    opr1_ff <= opr1;
+    forward_rs2_ff <= forward_rs2;
+    opr2_ff <= opr2;
+  end else begin
+    opr1_ff <= opr1_ff;
+    forward_rs2_ff <= forward_rs2_ff;
+    opr2_ff <= opr2_ff;
+  end
+end
 
 logic logic_out;
 logic [31:0] u_out;
@@ -82,8 +110,8 @@ always_comb begin
 end
 
 always_comb begin
-  pc_w_enable = (info.branch && (logic_out || info.uncond));
-  req.flush_req = (info.branch && (logic_out || info.uncond)) ? 4'b0111 : 4'b0000;
+  pc_w_enable = (!pipe.stall) && (info.branch && (logic_out || info.uncond));
+  req.flush_req = (!pipe.stall) && (info.branch && (logic_out || info.uncond)) ? 4'b0111 : 4'b0000;
 end
 
 // Arithmetic
@@ -108,10 +136,10 @@ always_comb begin
     out = opr1 << opr2[4:0];
   end
   5'b?_101_0: begin // SRLI, SRL
-    out = opr2 >> opr2[4:0];
+    out = opr1 >> opr2[4:0];
   end
   5'b?_101_1: begin // SRAI, SRA
-    out = $signed(opr2) >> opr2[4:0];
+    out = $signed(opr1) >> opr2[4:0];
   end
   5'b?_010_?: begin // SLTI, SLT
     out = ($signed(opr1) < $signed(opr2)) ? 32'h00000001 : 32'h00000000;

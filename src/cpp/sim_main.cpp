@@ -38,7 +38,7 @@ int main(int argc, char **argv, char **env) {
     top->uart_clk = 0;
     top->rst = 1;
 
-    while (!Verilated::gotFinish() && global_ticks < 10000 * 10000) {
+    while (!Verilated::gotFinish() && global_ticks < 10000 * 50000ULL) {
         top->eval();
         tfp->dump(global_ticks);
         tfp->flush();

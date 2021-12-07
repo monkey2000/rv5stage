@@ -187,7 +187,7 @@ end
 always_ff @ (posedge clk) begin
   if (rst) begin
     w_port_sel_ff <= 0;
-  end else if (read_stat == READ_IDLE) begin
+  end else if (write_stat == WRITE_IDLE) begin
     w_port_sel_ff <= w_port_sel[PORTS];
   end
 end

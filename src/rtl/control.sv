@@ -21,17 +21,17 @@ end
 
 always_comb begin
   if_id_ctrl.stall = id_req.stall_req || ex_req.stall_req || ma_req.stall_req;
-  if_id_ctrl.flush = if_req.flush_req[`IF_ID] || id_req.flush_req[`IF_ID] || ex_req.flush_req[`IF_ID] || ma_req.flush_req[`IF_ID];
+  if_id_ctrl.flush = id_req.flush_req[`IF_ID] || ex_req.flush_req[`IF_ID] || ma_req.flush_req[`IF_ID];
 end
 
 always_comb begin
   id_ex_ctrl.stall = ex_req.stall_req || ma_req.stall_req;
-  id_ex_ctrl.flush = if_req.flush_req[`ID_EX] || id_req.flush_req[`ID_EX] || ex_req.flush_req[`ID_EX] || ma_req.flush_req[`ID_EX];
+  id_ex_ctrl.flush = ex_req.flush_req[`ID_EX] || ma_req.flush_req[`ID_EX];
 end
 
 always_comb begin
   ex_ma_ctrl.stall = ma_req.stall_req;
-  ex_ma_ctrl.flush = if_req.flush_req[`EX_MA] || id_req.flush_req[`EX_MA] || ex_req.flush_req[`EX_MA] || ma_req.flush_req[`EX_MA];
+  ex_ma_ctrl.flush = ma_req.flush_req[`EX_MA];
 end
 
 endmodule
