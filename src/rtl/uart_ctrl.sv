@@ -154,11 +154,13 @@ always_comb begin
   UART_TX_RDY:
     if (!uart_valid) tx_stat_next = UART_TX_FIN;
     else tx_stat_next = UART_TX_RDY;
+  UART_TX_FIN:
+    tx_stat_next = UART_TX_START;
   UART_TX_START:
     if (tx_cnt == 3'b111) tx_stat_next = UART_TX_OPER;
     else tx_stat_next = UART_TX_START;
   UART_TX_OPER:
-    if (tx_shift == 3'b111) tx_stat_next = UART_TX_STOP;
+    if (tx_shift == 3'b111 && tx_cnt == 3'b111) tx_stat_next = UART_TX_STOP;
     else tx_stat_next = UART_TX_OPER;
   UART_TX_STOP:
     if (tx_cnt == 3'b111) tx_stat_next = UART_TX_IDLE;

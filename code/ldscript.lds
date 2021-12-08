@@ -1,6 +1,6 @@
 SECTIONS
 {
-  . = 0x800000000;
+  . = 0x80000000;
   .text : {
     KEEP(*(.bootloader)) 
     *(.text*)

@@ -3,6 +3,7 @@
 #include "verilated.h"
 #include "Vtop___024root.h"
 #include "clock_gen.hpp"
+#include "uart_cosim.hpp"
 #include <verilated_vcd_c.h>
 uint64_t global_ticks = 0;
 
@@ -33,17 +34,23 @@ int main(int argc, char **argv, char **env) {
     clock_gen uart_clk8(1085069 / 2); // 1085069ps 921600Hz
     clock_gen uart_clk(8680555 / 2);  // 8680555ps 115200bps
 
+    uart_cosim uart("logs/uart.txt");
+
     top->clk = 0;
     top->uart_clk8 = 0;
     top->uart_clk = 0;
     top->rst = 1;
 
-    while (!Verilated::gotFinish() && global_ticks < 10000 * 50000ULL) {
+    while (!Verilated::gotFinish() && global_ticks < 10000 * 1000000ULL) {
         top->eval();
         tfp->dump(global_ticks);
         tfp->flush();
         if (global_ticks > 50)
             top->rst = 0;
+        
+        if (uart_clk8.rising_edge()) {
+            uart.update(top->uart_tx);
+        }
 
         uint64_t min_to_next_tick = system_clk.time_to_edge();
 
