@@ -20,7 +20,6 @@ public:
   }
 
   void update(int uart_tx) {
-    printf("%d %d %c\n", counter_protocol, uart_tx, recv);
     if (counter_protocol == -2 && uart_tx == 0) {
       counter_protocol++;
       recv = 0;
