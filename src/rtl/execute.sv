@@ -13,6 +13,7 @@ module execute(
   input logic [31:0] rs2_data,
   input DecodeInfo mem_info,
   input logic [31:0] mem_out,
+  output logic [31:0] addr_gen,
   output logic [31:0] alu_out,
   output logic [31:0] r2_out,
   output logic pc_w_enable,
@@ -154,7 +155,6 @@ always_comb begin
 end
 
 // Memory AddrGen
-logic [31:0] addr_gen;
 always_comb begin
   addr_gen = opr1 + info.imm;
 end

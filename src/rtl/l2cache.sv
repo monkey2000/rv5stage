@@ -290,7 +290,7 @@ end
 
 always_ff @ (posedge clk) begin
   if (rst) begin
-    write_stat <= READ_IDLE;
+    write_stat <= WRITE_IDLE;
   end else begin
     write_stat <= write_stat_next;
   end

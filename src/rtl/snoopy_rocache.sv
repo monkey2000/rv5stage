@@ -5,13 +5,15 @@ module snoopy_rocache #(
   parameter MASKW = WIDTH / 8,
   parameter SIZE = 4 * 1024 * 8,    // 4 KiB
   parameter DEPTH = SIZE / WIDTH,
-  parameter ADDR_WIDTH = 32
+  parameter ADDR_WIDTH = 32,
+  parameter SPECULATE_BRAM_OPERATION = 1'b0
 ) (
   input   logic clk,
   input   logic rst,
 
   input   logic valid,
   output  logic ready,
+  input   logic [ADDR_WIDTH-1:0] speculate_addr,
   input   logic [ADDR_WIDTH-1:0] addr,
   input   logic [MASKW-1:0] wmask,
   input   logic [WIDTH-1:0] wdata,
@@ -125,6 +127,11 @@ logic read_hit;
 logic [ADDR_WIDTH-1:0]  refill_addr;
 logic [WIDTH-1:0]       refill_data;
 
+
+generate
+
+if (SPECULATE_BRAM_OPERATION == 1'b0) begin
+
 // Operate RAMs
 always_comb begin
   // Defaults not to read or write
@@ -173,6 +180,87 @@ always_comb begin
   read_hit = (addr[TAG_LSB_POS +: TAG_WIDTH] == tag_ram_rw_rdata && valid_ram_r_data);
 end
 
+// Read response
+always_comb begin
+  rdata = data_ram_r_data;
+end
+
+end else begin // SPECULATE_BRAM_OPERATION == 1'b1
+
+// Speculatively operate Data RAM
+always_comb begin
+  data_ram_r_en = 1;
+  data_ram_r_addr = speculate_addr[IDX_LSB_POS +: MEM_ADDR_WIDTH];
+end
+
+// Operate RAMs
+always_comb begin
+  // Defaults not to read or write
+  tag_ram_rw_wen = 0;
+  tag_ram_rw_addr = 0;
+  tag_ram_rw_wdata = 0;
+
+  data_ram_w_en = 0;
+  data_ram_w_addr = 0;
+  data_ram_w_data = 0;
+
+  valid_ram_r_addr = 0;
+  valid_ram_we1 = 0;
+  valid_ram_w1_addr = 0;
+  valid_ram_w1_data = 1;
+
+  if (valid && !we && refill_stat == REFILL_IDLE) begin
+    // If we're not writing, and we're not in refill, then we're reading
+    tag_ram_rw_addr = addr[IDX_LSB_POS +: MEM_ADDR_WIDTH];
+
+    valid_ram_r_addr = addr[IDX_LSB_POS +: MEM_ADDR_WIDTH];
+  end else if (refill_stat == REFILL_OPER) begin
+    // If refill is in progress
+    tag_ram_rw_wen = 1;
+    tag_ram_rw_addr = refill_addr[IDX_LSB_POS +: MEM_ADDR_WIDTH];
+    tag_ram_rw_wdata = refill_addr[TAG_LSB_POS +: TAG_WIDTH];
+
+    data_ram_w_en = {MASKW{1'b1}};
+    data_ram_w_addr = refill_addr[IDX_LSB_POS +: MEM_ADDR_WIDTH];
+    data_ram_w_data = refill_data;
+
+    valid_ram_we1 = 1;
+    valid_ram_w1_addr = refill_addr[IDX_LSB_POS +: MEM_ADDR_WIDTH];
+    valid_ram_w1_data = 1;
+  end
+end
+
+// Check hit or miss
+always_comb begin
+  // Hit if tag matches and block is valid
+  read_hit = (addr[TAG_LSB_POS +: TAG_WIDTH] == tag_ram_rw_rdata && valid_ram_r_data);
+end
+
+refill_stat_t refill_stat_last;
+
+always_ff @ (posedge clk) begin
+  if (rst) begin
+    refill_stat_last <= REFILL_IDLE;
+  end else begin
+    refill_stat_last <= refill_stat;
+  end
+end
+
+// Read response
+always_ff @ (posedge clk) begin
+  if (rst) begin
+    rdata <= 0;
+  end else if (refill_stat_last == REFILL_OPER) begin
+    rdata <= refill_data;
+  end else begin
+    rdata <= data_ram_r_data;
+  end
+end
+
+end
+
+endgenerate
+
 // refill FSM
 always_comb begin
   unique case (refill_stat)
@@ -213,10 +301,6 @@ always_ff @ (posedge clk) begin
   end else if (refill_stat == REFILL_BUS && refill_stat_next == REFILL_OPER) begin
     refill_data <= bus.r_data;
   end
-end
-
-always_comb begin
-  rdata = data_ram_r_data;
 end
 
 // ====================

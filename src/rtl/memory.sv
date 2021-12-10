@@ -8,6 +8,7 @@ module memory(
   input logic rst,
   output PipeRequest req,
   input DecodeInfo info,
+  input logic [31:0] speculate_addr,
   input logic [31:0] addr,
   input logic [31:0] data,
 
@@ -33,11 +34,12 @@ logic [127:0] dcache_rdata;
 logic [15:0] dcache_wmask;
 logic [127:0] dcache_wdata;
 
-snoopy_rocache dcache(
+snoopy_rocache #(.SPECULATE_BRAM_OPERATION(1'b1)) dcache (
   .clk(clk),
   .rst(rst),
   .valid(dcache_valid),
   .ready(dcache_ready),
+  .speculate_addr(speculate_addr),
   .addr(addr),
   .rdata(dcache_rdata),
   .wdata(dcache_wdata),

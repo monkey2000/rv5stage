@@ -19,6 +19,7 @@ logic [31:0] regfile_r1_data, regfile_r2_data, regfile_w_data, regfile_r2_data_f
 logic [4:0] regfile_w_addr;
 logic regfile_w_enable;
 
+logic [31:0] addr_gen;
 logic [31:0] execute_out, execute_out_ff;
 
 logic pc_w_enable;
@@ -32,7 +33,7 @@ logic [7:0] uart_data;
 PipeRequest if_req, id_req, ex_req, ma_req;
 PipeControl pc_ctrl, if_id_ctrl, id_ex_ctrl, ex_ma_ctrl;
 
-SystemBus bus [1:0];
+SystemBus bus [1:0] ();
 
 l2cache #(
   .INIT_FILE("data/icache.dat")
@@ -111,6 +112,7 @@ execute execute(
   .rs2_data(regfile_r2_data),
   .mem_info(memory_info_ff),
   .mem_out(mem_out),
+  .addr_gen(addr_gen),
   .alu_out(execute_out),
   .r2_out(regfile_r2_data_ff),
   .pc_w_enable(pc_w_enable),
@@ -123,6 +125,7 @@ memory memory(
   .rst(rst),
   .req(ma_req),
   .info(execute_info_ff),
+  .speculate_addr(addr_gen),
   .addr(execute_out),
   .data(regfile_r2_data_ff),
 
